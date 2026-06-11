@@ -40,8 +40,9 @@ class SunsetViewModel : ViewModel() {
         val longitude: Double = 121.5654,
         val cityName: String = "台北市 (預設)",
         val selectedDate: Calendar = Calendar.getInstance(),
+        val timezoneOffset: Double = 8.0, // 預設設為台灣 UTC+8
         val sunsetResult: SunsetCalculator.SunsetResult = SunsetCalculator.calculate(
-            25.0330, 121.5654, Calendar.getInstance()
+            25.0330, 121.5654, Calendar.getInstance(), 8.0
         ),
         val statusMessage: String = "預置完畢，正在顯示與預測夕陽",
         val isLocating: Boolean = false
@@ -55,13 +56,15 @@ class SunsetViewModel : ViewModel() {
      */
     fun updateCoordinates(lat: Double, lng: Double, cityName: String) {
         _uiState.update { state ->
-            val updatedResult = SunsetCalculator.calculate(lat, lng, state.selectedDate)
+            val autoTz = Math.round(lng / 15.0).toDouble()
+            val updatedResult = SunsetCalculator.calculate(lat, lng, state.selectedDate, autoTz)
             state.copy(
                 latitude = lat,
                 longitude = lng,
                 cityName = cityName,
+                timezoneOffset = autoTz,
                 sunsetResult = updatedResult,
-                statusMessage = "成功切換地區至 $cityName"
+                statusMessage = "成功切換地區至 $cityName (自動設定時區為 UTC${if (autoTz >= 0) "+" else ""}${autoTz.toInt()})"
             )
         }
     }
@@ -72,7 +75,17 @@ class SunsetViewModel : ViewModel() {
     fun updateLongitudeText(lngStr: String) {
         val lat = _uiState.value.latitude
         val lng = lngStr.toDoubleOrNull() ?: _uiState.value.longitude
-        updateCoordinates(lat, lng, "自訂座標")
+        val autoTz = Math.round(lng / 15.0).toDouble()
+        _uiState.update { state ->
+            val updatedResult = SunsetCalculator.calculate(lat, lng, state.selectedDate, autoTz)
+            state.copy(
+                longitude = lng,
+                cityName = "自訂座標",
+                timezoneOffset = autoTz,
+                sunsetResult = updatedResult,
+                statusMessage = "經度已更新，時區自動校對為 UTC${if (autoTz >= 0) "+" else ""}${autoTz.toInt()}"
+            )
+        }
     }
 
     /**
@@ -81,7 +94,30 @@ class SunsetViewModel : ViewModel() {
     fun updateLatitudeText(latStr: String) {
         val lat = latStr.toDoubleOrNull() ?: _uiState.value.latitude
         val lng = _uiState.value.longitude
-        updateCoordinates(lat, lng, "自訂座標")
+        _uiState.update { state ->
+            val updatedResult = SunsetCalculator.calculate(lat, lng, state.selectedDate, state.timezoneOffset)
+            state.copy(
+                latitude = lat,
+                cityName = "自訂座標",
+                sunsetResult = updatedResult,
+                statusMessage = "緯度已更新"
+            )
+        }
+    }
+
+    /**
+     * 手動修改時區調整值
+     */
+    fun updateTimezoneOffset(newOffset: Double) {
+        val clampedOffset = newOffset.coerceIn(-12.0, 14.0)
+        _uiState.update { state ->
+            val updatedResult = SunsetCalculator.calculate(state.latitude, state.longitude, state.selectedDate, clampedOffset)
+            state.copy(
+                timezoneOffset = clampedOffset,
+                sunsetResult = updatedResult,
+                statusMessage = "手動調整時區為 UTC${if (clampedOffset >= 0) "+" else ""}${clampedOffset.toInt()}"
+            )
+        }
     }
 
     /**
@@ -94,7 +130,7 @@ class SunsetViewModel : ViewModel() {
                 set(Calendar.MONTH, monthIndex)
                 set(Calendar.DAY_OF_MONTH, dayOfMonth)
             }
-            val updatedResult = SunsetCalculator.calculate(state.latitude, state.longitude, newCalendar)
+            val updatedResult = SunsetCalculator.calculate(state.latitude, state.longitude, newCalendar, state.timezoneOffset)
             state.copy(
                 selectedDate = newCalendar,
                 sunsetResult = updatedResult,
@@ -168,14 +204,16 @@ class SunsetViewModel : ViewModel() {
             // 精簡經緯度至小數 4 位以優化 UI 呈現
             val formattedLat = Math.round(location.latitude * 10000.0) / 10000.0
             val formattedLng = Math.round(location.longitude * 10000.0) / 10000.0
-            val updatedResult = SunsetCalculator.calculate(formattedLat, formattedLng, state.selectedDate)
+            val autoTz = Math.round(formattedLng / 15.0).toDouble()
+            val updatedResult = SunsetCalculator.calculate(formattedLat, formattedLng, state.selectedDate, autoTz)
             state.copy(
                 latitude = formattedLat,
                 longitude = formattedLng,
                 cityName = sourceName,
+                timezoneOffset = autoTz,
                 sunsetResult = updatedResult,
                 isLocating = false,
-                statusMessage = "GPS 定位刷新成功！來源：$sourceName"
+                statusMessage = "GPS 定位刷新成功！來源：$sourceName (自動時區：UTC${if (autoTz >= 0) "+" else ""}${autoTz.toInt()})"
             )
         }
     }

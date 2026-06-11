@@ -36,14 +36,20 @@ object SunsetCalculator {
      * @param latitude 緯度 (正數表示北緯，負數表示南緯)
      * @param longitude 經度 (正數表示東經，負數表示西經)
      * @param calendar 日期與本地時區資訊
+     * @param customTimezoneOffset 指定時區調整值 (若為 null 則依據經度自動估計幾何時區)
      */
-    fun calculate(latitude: Double, longitude: Double, calendar: Calendar): SunsetResult {
+    fun calculate(
+        latitude: Double,
+        longitude: Double,
+        calendar: Calendar,
+        customTimezoneOffset: Double? = null
+    ): SunsetResult {
         val dayOfYear = calendar.get(Calendar.DAY_OF_YEAR)
 
         // 1. 本地時區偏移量 (單位：小時)
-        // 包括日光節約時間 (DST)
-        val tzOffsetMs = calendar.timeZone.getOffset(calendar.timeInMillis)
-        val timezoneOffsetHours = tzOffsetMs / (1000.0 * 60.0 * 60.0)
+        // 為了避免裝置/雲端伺服器與目標觀測點不同產生的幾小時時間差偏誤，
+        // 預設依據當前經度估計幾何時區，或者採用使用者手動微調的 customTimezoneOffset
+        val timezoneOffsetHours = customTimezoneOffset ?: Math.round(longitude / 15.0).toDouble()
 
         // 估計日落發生的概略時段 (假設為下午 6 點，轉換為分數：18 * 60 = 1080)
         // 估計日落的 fractional year (gamma) 角度在一天中的變動弧度

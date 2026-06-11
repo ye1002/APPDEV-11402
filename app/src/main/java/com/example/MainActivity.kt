@@ -815,6 +815,82 @@ fun DashboardControlSection(
             HorizontalDivider(color = Color(0x1AFFFFFF), thickness = 1.dp)
             Spacer(modifier = Modifier.height(4.dp))
 
+            // 時區微調器 (極致體貼)
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "目標觀測點時區 (已依經度自動對準幾何時區)：",
+                    fontSize = 11.sp,
+                    color = Color(0xFFB0BEC5),
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0x11FFFFFF), RoundedCornerShape(12.dp))
+                        .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = "時區",
+                            tint = Color(0xFFFFB74D),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "UTC${if (uiState.timezoneOffset >= 0) "+" else ""}${if (uiState.timezoneOffset % 1.0 == 0.0) uiState.timezoneOffset.toInt().toString() else uiState.timezoneOffset.toString()}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        IconButton(
+                            onClick = { viewModel.updateTimezoneOffset(uiState.timezoneOffset - 1.0) },
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(Color(0x22FFFFFF), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Remove,
+                                contentDescription = "時區減少",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { viewModel.updateTimezoneOffset(uiState.timezoneOffset + 1.0) },
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(Color(0x22FFFFFF), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "時區增加",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            HorizontalDivider(color = Color(0x1AFFFFFF), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(4.dp))
+
             // B. 預測日期切換器 (極致美觀)
             Column(
                 modifier = Modifier.fillMaxWidth()
