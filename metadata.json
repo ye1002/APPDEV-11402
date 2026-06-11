@@ -1,0 +1,6 @@
+{
+  "name": "夕陽預報",
+  "description": "預測並顯示當天（或指定日期）的夕陽落下時間與落下方位角的簡潔、現代感應用程式。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
